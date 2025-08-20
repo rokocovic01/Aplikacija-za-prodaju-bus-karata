@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚌 Autobusne Karte - VoltDB Aplikacija</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.5.0/axios.min.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="logo">🚌 AutobusKarte.hr</h1>
+                <nav class="nav">
+                    <button class="nav-btn active" data-tab="search">Pretraži</button>
+                    <button class="nav-btn" data-tab="tickets">Moje Karte</button>
+                    <button class="nav-btn" data-tab="admin">Admin</button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            
+            <!-- Connection Status -->
+            <div id="connectionStatus" class="status-card">
+                <div class="status-indicator"></div>
+                <span class="status-text">Spajanje na VoltDB...</span>
+            </div>
+
+            <!-- Search Tab -->
+            <div id="searchTab" class="tab-content active">
+                <div class="search-section">
+                    <h2>🔍 Pretraži Vozne Rasporede</h2>
+                    
+                    <form id="searchForm" class="search-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="departureCity">Polazni Grad</label>
+                                <select id="departureCity" name="departureCity" required>
+                                    <option value="">Odaberite grad</option>
+                                    <option value="Zagreb">Zagreb</option>
+                                    <option value="Split">Split</option>
+                                    <option value="Rijeka">Rijeka</option>
+                                    <option value="Osijek">Osijek</option>
+                                    <option value="Pula">Pula</option>
+                                    <option value="Dubrovnik">Dubrovnik</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="arrivalCity">Odredišni Grad</label>
+                                <select id="arrivalCity" name="arrivalCity" required>
+                                    <option value="">Odaberite grad</option>
+                                    <option value="Zagreb">Zagreb</option>
+                                    <option value="Split">Split</option>
+                                    <option value="Rijeka">Rijeka</option>
+                                    <option value="Osijek">Osijek</option>
+                                    <option value="Pula">Pula</option>
+                                    <option value="Dubrovnik">Dubrovnik</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="travelDate">Datum Putovanja</label>
+                                <input type="date" id="travelDate" name="travelDate" required>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">🔍 Pretraži Rasporede</button>
+                    </form>
+                </div>
+
+                <!-- Search Results -->
+                <div id="searchResults" class="results-section hidden">
+                    <h3>📋 Dostupni Vozni Rasporedi</h3>
+                    <div id="schedulesList" class="schedules-list"></div>
+                </div>
+
+                <!-- Booking Modal -->
+                <div id="bookingModal" class="modal hidden">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>🎫 Rezervacija Karte</h3>
+                            <button class="modal-close">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="bookingForm">
+                                <div id="bookingDetails" class="booking-details"></div>
+                                
+                                <div class="form-group">
+                                    <label for="passengerName">Ime i Prezime *</label>
+                                    <input type="text" id="passengerName" name="passengerName" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="passengerEmail">Email *</label>
+                                    <input type="email" id="passengerEmail" name="passengerEmail" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="seatNumber">Broj Mjesta *</label>
+                                    <input type="number" id="seatNumber" name="seatNumber" min="1" max="52" required>
+                                </div>
+                                
+                                <!-- Form Actions - POBOLJŠANJE -->
+<div class="form-actions">
+    <button type="button" class="btn btn-secondary" onclick="window.busApp.closeModal()">Odustani</button>
+    <button type="submit" class="btn btn-primary">💳 Rezerviraj Kartu</button>
+</div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- My Tickets Tab -->
+            <div id="ticketsTab" class="tab-content">
+                <div class="tickets-section">
+                    <h2>🎫 Moje Karte</h2>
+                    
+                    <form id="ticketsForm" class="tickets-form">
+                        <div class="form-group">
+                            <label for="userEmail">Unesite Vaš Email</label>
+                            <input type="email" id="userEmail" name="userEmail" placeholder="vas@email.com" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">📥 Dohvati Karte</button>
+                    </form>
+                    
+                    <div id="userTickets" class="user-tickets hidden"></div>
+                </div>
+            </div>
+
+            <!-- Admin Tab -->
+            <div id="adminTab" class="tab-content">
+                <div class="admin-section">
+                    <h2>⚙️ Administratorska Konzola</h2>
+                    
+                    <div class="admin-panels">
+                        <!-- VoltDB Status -->
+                        <div class="admin-panel">
+                            <h3>📊 VoltDB Status</h3>
+                            <div id="voltdbStatus" class="status-info">
+                                <div class="status-item">
+                                    <span class="label">Connection:</span>
+                                    <span id="dbConnection" class="value">-</span>
+                                </div>
+                                <div class="status-item">
+                                    <span class="label">Response Time:</span>
+                                    <span id="responseTime" class="value">-</span>
+                                </div>
+                            </div>
+                            <button id="testConnection" class="btn btn-secondary">🔄 Test Konekcije</button>
+                        </div>
+
+                        <!-- Database Stats -->
+                        <div class="admin-panel">
+                            <h3>📈 Database Statistics</h3>
+                            <div id="dbStats" class="db-stats">
+                                <div class="stat-item">
+                                    <span class="label">Total Routes:</span>
+                                    <span id="totalRoutes" class="value">-</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="label">Available Schedules:</span>
+                                    <span id="totalSchedules" class="value">-</span>
+                                </div>
+                            </div>
+                            <button id="refreshStats" class="btn btn-secondary">🔄 Osvježi Statistike</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="loading-spinner"></div>
+        <p>Obrađuje se zahtjev...</p>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification hidden">
+        <div class="notification-content">
+            <span class="notification-icon"></span>
+            <span class="notification-message"></span>
+            <button class="notification-close">&times;</button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 AutobusKarte.hr - VoltDB Bus Ticket System | 
+               <span id="footerStatus">🔴 Disconnected</span></p>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

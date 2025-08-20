@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # VoltDB Node 1 (Leader)
+  voltdb-node1:
+    image: ilkinulas/voltdb:latest
+    container_name: voltdb-node1
+    hostname: voltdb-node1
+    networks:
+      - voltdb-cluster
+    ports:
+      - "21212:21212"    # Client port
+      - "8080:8080"      # Web console
+      - "3021:3021"      # Admin port
+    environment:
+      - HOST_COUNT=1
+      - HOSTS=localhost
+    volumes:
+      - voltdb-data1:/var/voltdb
+      - ./docker-config:/tmp/schema
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Backend API Server
+  bus-api:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: bus-api
+    networks:
+      - voltdb-cluster
+    ports:
+      - "3000:3000"
+    environment:
+      - VOLTDB_HOST=voltdb-node1
+      - VOLTDB_PORT=21212
+      - NODE_ENV=production
+    depends_on:
+      voltdb-node1:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+
+  # Frontend Web Server (Nginx)
+  bus-frontend:
+    image: nginx:alpine
+    container_name: bus-frontend
+    ports:
+      - "8081:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - bus-api
+
+networks:
+  voltdb-cluster:
+    driver: bridge
+
+volumes:
+  voltdb-data1:
+    driver: local
