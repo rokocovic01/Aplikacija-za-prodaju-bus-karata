@@ -45,7 +45,6 @@ async function executeSQL(query, parameters = []) {
 // 1. Health check
 app.get('/api/health', async (req, res) => {
     try {
-        // Test VoltDB connection
         const testResponse = await axios.get(`${VOLTDB_BASE_URL}/api/1.0/`, {
             params: {
                 Procedure: '@SystemInformation',
@@ -92,7 +91,7 @@ app.get('/api/routes', async (req, res) => {
 // 3. Dohvaćanje dostupnih voznih rasporeda
 app.get('/api/schedules', async (req, res) => {
     try {
-        const { departure_city, arrival_city } = req.query;
+        const { departure_city, arrival_city, departure_time } = req.query;
         
         let query = `
             SELECT 
@@ -124,11 +123,19 @@ app.get('/api/schedules', async (req, res) => {
             query += ' AND r.arrival_city = ?';
             parameters.push(arrival_city);
         }
+
+        if (departure_time) {
+            const start = `${departure_time} 00:00:00.000000`;
+            const end   = `${departure_time} 23:59:59.999999`;
+
+            query += ' AND s.departure_time >= ? AND s.departure_time <= ?';
+            parameters.push(start, end);
+        }
         
         query += ' ORDER BY s.departure_time';
         
         const result = await executeSQL(query, parameters);
-        
+        console.log('CCCCC', result);
         res.json({
             success: true,
             data: result.results[0]?.data || [],

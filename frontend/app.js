@@ -184,17 +184,16 @@ class BusTicketApp {
             case 'connected':
                 indicator.className = 'status-indicator connected';
                 text.textContent = `Povezano s VoltDB ${responseTime ? `(${responseTime}ms)` : ''}`;
-                if (footer) footer.innerHTML = '🟢 Connected';
                 break;
             case 'connecting':
                 indicator.className = 'status-indicator connecting';
                 text.textContent = 'Spajanje na VoltDB...';
-                if (footer) footer.innerHTML = '🟡 Connecting';
+
                 break;
             default:
                 indicator.className = 'status-indicator';
                 text.textContent = 'Veza s VoltDB prekinuta';
-                if (footer) footer.innerHTML = '🔴 Disconnected';
+
         }
     }
 
@@ -218,7 +217,9 @@ class BusTicketApp {
         try {
             const departureCity = document.getElementById('departureCity')?.value;
             const arrivalCity = document.getElementById('arrivalCity')?.value;
+            const departureTime = document.getElementById('departureTime')?.value;
 
+            console.log(departureTime);
             if (!departureCity || !arrivalCity) {
                 this.showNotification('❌ Molimo odaberite gradove', 'error');
                 return;
@@ -229,7 +230,7 @@ class BusTicketApp {
                 return;
             }
 
-            const params = { departure_city: departureCity, arrival_city: arrivalCity };
+            const params = { departure_city: departureCity, arrival_city: arrivalCity, };
             console.log('🌐 API request params:', params);
 
             const response = await axios.get(`${this.apiBaseUrl}/schedules`, { params });
@@ -448,7 +449,7 @@ class BusTicketApp {
             const email = document.getElementById('userEmail')?.value?.trim();
             
             if (!email || !email.includes('@')) {
-                this.showNotification('❌ Unesite važeći email', 'error');
+                this.showNotification(' Unesite važeći email', 'error');
                 return;
             }
 
@@ -458,16 +459,16 @@ class BusTicketApp {
                 this.displayUserTickets(response.data.data);
                 
                 if (response.data.data.length === 0) {
-                    this.showNotification('ℹ️ Nema karata za taj email', 'info');
+                    this.showNotification(' Nema karata za taj email', 'info');
                 } else {
-                    this.showNotification(`✅ Pronađeno ${response.data.data.length} karata`, 'success');
+                    this.showNotification(` Pronađeno ${response.data.data.length} karata`, 'success');
                 }
             }
         } catch (error) {
-            console.error('❌ Get tickets failed:', error);
-            this.showNotification('❌ Greška pri dohvaćanju karata', 'error');
+            console.error(' Get tickets failed:', error);
+            this.showNotification(' Greška pri dohvaćanju karata', 'error');
         }
-    }
+    } 
 
     displayUserTickets(tickets) {
         const container = document.getElementById('userTickets');
